@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Grocery Inventory — Pro Dashboard</title>
+
+<!-- Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+<style>
+  :root{
+    --bg:#0f1226; --panel:#151936; --panel-2:#1b2047; --muted:#8ea0ff;
+    --txt:#edf0ff; --txt-dim:#b8c1ff; --primary:#7c5cff; --primary-2:#5ad1ff;
+    --accent:#ff7ab6; --ok:#2fdc8b; --warn:#ffd166; --err:#ff5d5d;
+    --glass: rgba(255,255,255,0.06);
+    --radius: 16px; --shadow: 0 10px 30px rgba(0,0,0,0.35);
+  }
+  .light{
+    --bg:#f4f6ff; --panel:#ffffff; --panel-2:#f0f3ff; --muted:#5964ff;
+    --txt:#0f1226; --txt-dim:#3b3f66; --primary:#5a46f0; --primary-2:#00aeea;
+    --accent:#d43a8a; --ok:#16a34a; --warn:#eab308; --err:#ef4444;
+    --glass: rgba(0,0,0,0.05);
+    --shadow: 0 10px 25px rgba(22,34,72,0.12);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family: Inter, ui-sans-serif, system-ui, Segoe UI, Roboto, Helvetica, Arial;
+    background: radial-gradient(1200px 800px at 80% -20%, rgba(124,92,255,0.25), transparent),
+                radial-gradient(1200px 800px at 0% 120%, rgba(90,209,255,0.25), transparent),
+                var(--bg);
+    color:var(--txt);
+    min-height:100svh;
+  }
+  /* Header */
+  .shell{max-width:1200px; margin:auto; padding:24px;}
+  .head{
+    display:flex; align-items:center; gap:16px; justify-content:space-between; margin-bottom:18px;
+  }
+  .brand{display:flex; align-items:center; gap:12px;}
+  .logo{
+    width:44px; height:44px; border-radius:12px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-2));
+    box-shadow: var(--shadow);
+    display:grid; place-items:center; color:white; font-weight:800;
+  }
+  .title h1{margin:0; font-size:22px; letter-spacing:.2px}
+  .title p{margin:2px 0 0; color:var(--txt-dim); font-size:12px}
+  .head-actions{display:flex; align-items:center; gap:8px;}
+  .btn{
+    border:0; padding:10px 14px; border-radius:12px; font-weight:600; cursor:pointer;
+    background:var(--panel); color:var(--txt); box-shadow: var(--shadow);
+  }
+  .btn.primary{background: linear-gradient(135deg, var(--primary), var(--primary-2)); color:white}
+  .btn.ghost{background:transparent; border:1px solid var(--glass)}
+  .btn i{margin-right:8px}
+  .toggle{width:42px; height:42px; border-radius:12px; background:var(--panel); display:grid; place-items:center}
+
+  /* KPI cards */
+  .kpis{display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:16px; margin:16px 0 22px}
+  .card{
+    background: linear-gradient(180deg, var(--panel), var(--panel-2));
+    border-radius: var(--radius); padding:18px; box-shadow: var(--shadow); position:relative; overflow:hidden;
+  }
+  .card .label{color:var(--txt-dim); font-size:12px}
+  .card .value{font-size:28px; font-weight:800; margin-top:6px}
+  .card .spark{position:absolute; right:-20px; top:-20px; width:120px; height:120px; border-radius:50%;
+    background: radial-gradient(closest-side, rgba(255,255,255,.12), transparent);
+    filter: blur(6px);
+  }
+
+  /* toolbar */
+  .toolbar{
+    display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:12px 0 18px;
+  }
+  .search{
+    flex:1; min-width:220px; display:flex; align-items:center; gap:10px;
+    background:var(--panel); border-radius:12px; padding:10px 12px; border:1px solid var(--glass);
+  }
+  .search input{
+    flex:1; background:transparent; border:0; color:var(--txt); outline:none;
+  }
+  .chip{
+    background:var(--panel); border:1px solid var(--glass); padding:8px 10px; border-radius:999px; font-size:12px;
+    color:var(--txt-dim);
+  }
+
+  /* table */
+  .table-wrap{
+    background: var(--panel); border-radius:16px; box-shadow: var(--shadow);
+    border:1px solid var(--glass); overflow: hidden;
+  }
+  table{width:100%; border-collapse:collapse}
+  thead th{
+    background:linear-gradient(180deg, var(--panel-2), var(--panel));
+    position:sticky; top:0; z-index:1; font-size:12px; text-transform:uppercase; letter-spacing:.6px;
+  }
+  th,td{padding:14px 14px; border-bottom:1px solid var(--glass)}
+  tbody tr:hover{background: rgba(124,92,255,0.08)}
+  .actions{display:flex; gap:8px; justify-content:flex-end}
+  .badge{padding:4px 8px; border-radius:999px; font-size:11px; font-weight:700}
+  .badge.low{background: rgba(255,93,93,.15); color:var(--err); border:1px solid rgba(255,93,93,.25)}
+  .badge.ok{background: rgba(47,220,139,.15); color:var(--ok); border:1px solid rgba(47,220,139,.25)}
+
+  /* FAB */
+  .fab{
+    position: fixed; right:24px; bottom:24px; width:60px; height:60px; border-radius:16px; border:0; cursor:pointer;
+    background: linear-gradient(135deg, var(--primary), var(--accent)); color:white; box-shadow: var(--shadow);
+    font-size:22px;
+  }
+
+  /* Modal */
+  .modal-back{
+    position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; align-items:center; justify-content:center; padding:18px;
+  }
+  .modal{
+    width:min(560px, 96vw); background:var(--panel); border-radius:18px; border:1px solid var(--glass);
+    box-shadow: var(--shadow); transform: translateY(30px) scale(.98); opacity:0; transition:.25s;
+  }
+  .modal.show{transform: translateY(0) scale(1); opacity:1}
+  .modal-head{padding:16px 18px; border-bottom:1px solid var(--glass); display:flex; align-items:center; justify-content:space-between}
+  .modal-body{padding:16px 18px; display:grid; gap:12px}
+  .row{display:grid; grid-template-columns: 140px 1fr; gap:10px; align-items:center}
+  .input, .select{
+    background:var(--panel-2); border:1px solid var(--glass); padding:10px 12px; border-radius:12px; color:var(--txt);
+  }
+  .modal-foot{padding:16px 18px; border-top:1px solid var(--glass); display:flex; gap:10px; justify-content:flex-end}
+
+  /* Toasts */
+  .toasts{position:fixed; right:16px; top:16px; display:grid; gap:10px; z-index:9999}
+  .toast{
+    background:var(--panel); border:1px solid var(--glass); color:var(--txt); padding:12px 14px; border-radius:12px;
+    box-shadow: var(--shadow); display:flex; align-items:center; gap:10px; transform:translateX(30px); opacity:0; animation: pop .35s ease forwards;
+  }
+  .toast.ok{border-color: rgba(47,220,139,.35)}
+  .toast.err{border-color: rgba(255,93,93,.35)}
+  @keyframes pop{to{transform:none; opacity:1}}
+
+  /* Skeletons */
+  .skeleton{background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent); background-size: 200% 100%;
+    animation: shimmer 1.4s infinite linear;}
+  @keyframes shimmer{0%{background-position:200% 0} 100%{background-position:-200% 0}}
+
+  /* Responsive */
+  @media (max-width:860px){
+    .kpis{grid-template-columns:1fr}
+    .row{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <div class="head">
+    <div class="brand">
+      <div class="logo"><i class="fa-solid fa-basket-shopping"></i></div>
+      <div class="title">
+        <h1>Grocery Inventory</h1>
+        <p>Beautiful, fast, and deployed-ready dashboard - by Dinagaran N</p>
+      </div>
+    </div>
+    <div class="head-actions">
+      <button class="btn ghost" id="themeBtn"><i class="fa-solid fa-moon"></i> Theme</button>
+      <button class="btn" id="refreshBtn"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+      <button class="btn primary" id="addBtn"><i class="fa-solid fa-plus"></i> Add Item</button>
+    </div>
+  </div>
+
+  <div class="kpis" id="kpis">
+    <div class="card">
+      <div class="label">Total Items</div>
+      <div class="value" id="kpiItems">—</div>
+      <div class="spark"></div>
+    </div>
+    <div class="card">
+      <div class="label">Total Quantity</div>
+      <div class="value" id="kpiQty">—</div>
+      <div class="spark"></div>
+    </div>
+    <div class="card">
+      <div class="label">Inventory Value</div>
+      <div class="value" id="kpiValue">—</div>
+      <div class="spark"></div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search">
+      <i class="fa-solid fa-magnifying-glass" style="color:var(--muted)"></i>
+      <input id="q" placeholder="Search name / barcode…" />
+    </div>
+    <div class="chip">Sort:
+      <select id="sort" class="select" style="margin-left:8px">
+        <option value="name">Name (A→Z)</option>
+        <option value="-name">Name (Z→A)</option>
+        <option value="barcode">Barcode</option>
+        <option value="price">Price (Low→High)</option>
+        <option value="-price">Price (High→Low)</option>
+        <option value="quantity">Qty (Low→High)</option>
+        <option value="-quantity">Qty (High→Low)</option>
+      </select>
+    </div>
+    <div class="chip">Low stock:
+      <select id="low" class="select" style="margin-left:8px">
+        <option value="0">Show all</option>
+        <option value="20">Below 20</option>
+        <option value="50">Below 50</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table id="grid">
+      <thead>
+        <tr>
+          <th style="width:28%">Name</th>
+          <th>Barcode</th>
+          <th>Price</th>
+          <th>Qty</th>
+          <th>Status</th>
+          <th style="width:140px; text-align:right">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <!-- rows injected -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<button class="fab" id="fab"><i class="fa-solid fa-plus"></i></button>
+
+<!-- Modal -->
+<div class="modal-back" id="mb">
+  <div class="modal" id="modal">
+    <div class="modal-head">
+      <strong id="modalTitle">Add Item</strong>
+      <button class="btn ghost" id="closeModal"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="row"><label>Name</label><input class="input" id="f_name" placeholder="e.g., Basmati Rice"/></div>
+      <div class="row"><label>Barcode</label><input class="input" id="f_barcode" placeholder="12-digit barcode"/></div>
+      <div class="row"><label>Price</label><input class="input" id="f_price" type="number" step="0.01" placeholder="0.00"/></div>
+      <div class="row"><label>Quantity</label><input class="input" id="f_qty" type="number" step="1" placeholder="0"/></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" id="cancelBtn">Cancel</button>
+      <button class="btn primary" id="saveBtn"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toasts -->
+<div class="toasts" id="toasts"></div>
+
+<script>
+/* ------------------ CONFIG ------------------ */
+const API_BASE = localStorage.API_BASE || 'https://inventory-management-backend-2v3s.onrender.com'; // change or set via localStorage
+const API = {
+  list:   () => fetch(API_BASE + '/api/products'),
+  add:    (body) => fetch(API_BASE + '/api/products', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)}),
+  update: (barcode, body) => fetch(API_BASE + '/api/products/'+encodeURIComponent(barcode), {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)}),
+  remove: (barcode) => fetch(API_BASE + '/api/products/'+encodeURIComponent(barcode), {method:'DELETE'})
+};
+
+const state = { rows: [], filtered: [], editing: null, theme: localStorage.theme || 'dark' };
+
+/* ------------------ UTIL ------------------ */
+const $ = sel => document.querySelector(sel);
+const el = (tag, props={}, children=[]) => {
+  const n = Object.assign(document.createElement(tag), props);
+  children.forEach(c => n.append(c));
+  return n;
+};
+function toast(msg, type='ok'){ 
+  const t = el('div', {className:'toast '+type}); 
+  t.innerHTML = `<i class="fa-solid ${type==='ok'?'fa-circle-check':'fa-triangle-exclamation'}"></i> ${msg}`;
+  $('#toasts').append(t);
+  setTimeout(()=>{ t.style.opacity=.0; t.style.transform='translateX(40px)'; setTimeout(()=>t.remove(),250); }, 2400);
+}
+function currency(n){ return '₹ ' + Number(n).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}); }
+
+/* ------------------ THEME ------------------ */
+function applyTheme(){
+  if(state.theme==='light') document.body.classList.add('light'); else document.body.classList.remove('light');
+}
+$('#themeBtn').onclick = ()=>{
+  state.theme = state.theme==='light' ? 'dark':'light';
+  localStorage.theme = state.theme;
+  applyTheme();
+};
+applyTheme();
+
+/* ------------------ LOAD & RENDER ------------------ */
+async function load(){
+  $('#tbody').innerHTML = `<tr><td colspan="6"><div class="skeleton" style="height:44px; border-radius:10px"></div></td></tr>`;
+  try{
+    const res = await API.list();
+    const data = await res.json();
+    state.rows = Array.isArray(data)? data : [];
+    filterSortRender();
+    kpis();
+  }catch(e){
+    $('#tbody').innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--err); padding:30px">Failed to load data</td></tr>`;
+    console.error(e);
+  }
+}
+function kpis(){
+  const items = state.rows.length;
+  const qty = state.rows.reduce((a,b)=>a+Number(b.quantity||0),0);
+  const value = state.rows.reduce((a,b)=>a+Number(b.price||0)*Number(b.quantity||0),0);
+  $('#kpiItems').textContent = items;
+  $('#kpiQty').textContent = qty;
+  $('#kpiValue').textContent = currency(value);
+}
+function filterSortRender(){
+  const q = $('#q').value.trim().toLowerCase();
+  const low = Number($('#low').value);
+  const sort = $('#sort').value;
+
+  let arr = [...state.rows].filter(r=>{
+    const hit = (r.name||'').toLowerCase().includes(q) || (r.barcode||'').toLowerCase().includes(q);
+    const lowok = low===0 ? true : Number(r.quantity||0) < low;
+    return hit && lowok;
+  });
+
+  const key = sort.replace('-','');
+  arr.sort((a,b)=>{
+    let va = a[key], vb = b[key];
+    if(typeof va === 'string'){ va=va.toLowerCase(); vb=vb.toLowerCase(); }
+    const dir = sort.startsWith('-') ? -1 : 1;
+    return (va>vb?1:va<vb?-1:0) * dir;
+  });
+
+  state.filtered = arr;
+  renderTable(arr);
+}
+function renderTable(rows){
+  const tb = $('#tbody'); tb.innerHTML='';
+  if(rows.length===0){
+    tb.append(el('tr',{},[ el('td',{colSpan:6,innerHTML:`<div style="text-align:center; padding:40px; color:var(--txt-dim)">
+      <i class="fa-regular fa-face-smile-beam" style="font-size:42px; display:block; margin-bottom:8px; color:var(--muted)"></i>
+      No items match your filters</div>`}) ]));
+    return;
+  }
+  rows.forEach(r=>{
+    const badge = el('span',{className:'badge '+(r.quantity<20?'low':'ok'), textContent: r.quantity<20?'Low':'OK'});
+    const tr = el('tr',{},[
+      el('td',{textContent:r.name}),
+      el('td',{textContent:r.barcode}),
+      el('td',{textContent:currency(r.price)}),
+      el('td',{textContent:r.quantity}),
+      el('td',{},[badge]),
+      el('td',{},[
+        el('div',{className:'actions'},[
+          el('button',{className:'btn', innerHTML:'<i class="fa-solid fa-pen-to-square"></i> Edit', onclick:()=>openModal(r)}),
+          el('button',{className:'btn ghost', innerHTML:'<i class="fa-solid fa-trash"></i> Delete', onclick:()=>onDelete(r)})
+        ])
+      ])
+    ]);
+    tb.append(tr);
+  });
+}
+
+/* ------------------ SEARCH/SORT ------------------ */
+$('#q').oninput = filterSortRender;
+$('#sort').onchange = filterSortRender;
+$('#low').onchange = filterSortRender;
+$('#refreshBtn').onclick = load;
+
+/* ------------------ MODAL ------------------ */
+const modalBack = $('#mb'), modalEl = $('#modal');
+function openModal(row=null){
+  state.editing = row;
+  $('#modalTitle').textContent = row? 'Edit Item' : 'Add Item';
+  $('#f_name').value = row?.name || '';
+  $('#f_barcode').value = row?.barcode || '';
+  $('#f_price').value = row?.price ?? '';
+  $('#f_qty').value = row?.quantity ?? '';
+  modalBack.style.display='flex';
+  requestAnimationFrame(()=> modalEl.classList.add('show'));
+}
+function closeModal(){
+  modalEl.classList.remove('show');
+  setTimeout(()=> modalBack.style.display='none', 180);
+}
+$('#addBtn').onclick = ()=>openModal();
+$('#fab').onclick = ()=>openModal();
+$('#closeModal').onclick = closeModal;
+$('#cancelBtn').onclick = closeModal;
+
+function validateForm(){
+  const name = $('#f_name').value.trim();
+  const barcode = $('#f_barcode').value.trim();
+  const price = parseFloat($('#f_price').value);
+  const qty = parseInt($('#f_qty').value,10);
+  if(!name) return [false,'Name required'];
+  if(!/^\d{6,20}$/.test(barcode)) return [false,'Barcode must be 6–20 digits'];
+  if(isNaN(price)||price<0) return [false,'Price must be ≥ 0'];
+  if(isNaN(qty)||qty<0) return [false,'Quantity must be ≥ 0'];
+  return [true,{name, barcode, price, quantity:qty}];
+}
+
+$('#saveBtn').onclick = async ()=>{
+  const [ok, data] = validateForm();
+  if(!ok){ toast(data,'err'); return; }
+  try{
+    if(state.editing){
+      await API.update(state.editing.barcode, data);
+      toast('Item updated','ok');
+    }else{
+      await API.add(data);
+      toast('Item added','ok');
+    }
+    closeModal();
+    await load();
+  }catch(e){ console.error(e); toast('Operation failed','err'); }
+};
+
+async function onDelete(row){
+  if(!confirm(`Delete "${row.name}" ?`)) return;
+  try{
+    const res = await API.remove(row.barcode);
+    if(res.ok){ toast('Deleted','ok'); await load(); }
+    else toast('Delete failed','err');
+  }catch(e){ console.error(e); toast('Delete failed','err'); }
+}
+
+/* ------------------ BOOT ------------------ */
+load();
+</script>
+</body>
+</html>
